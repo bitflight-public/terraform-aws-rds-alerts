@@ -4,7 +4,7 @@ variable "region" {
 }
 
 provider "aws" {
-  region = "${var.region}"
+  region = var.region
 
   # Make it faster by skipping something
   skip_get_ec2_platforms      = true
@@ -12,6 +12,10 @@ provider "aws" {
   skip_region_validation      = true
   skip_credentials_validation = true
   skip_requesting_account_id  = true
+}
+
+resource "aws_sns_topic" "default" {
+  name_prefix = "rds-threshold-alerts"
 }
 
 resource "aws_db_instance" "default" {
@@ -30,14 +34,11 @@ resource "aws_db_instance" "default" {
 }
 
 module "rds_alarms" {
-  source         = "../../"
-  db_instance_id = "${aws_db_instance.default.id}"
-}
-
-output "rds_alarms_sns_topic_arn" {
-  value = "${module.rds_alarms.sns_topic_arn}"
+  source            = "../../"
+  db_instance_ids   = [aws_db_instance.default.id]
+  aws_sns_topic_arn = aws_sns_topic.default.arn
 }
 
 output "rds_arn" {
-  value = "${aws_db_instance.default.id}"
+  value = aws_db_instance.default.id
 }

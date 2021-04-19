@@ -7,7 +7,7 @@
  [![Build Status](https://travis-ci.org/cloudposse/terraform-aws-rds-cloudwatch-sns-alarms.svg?branch=master)](https://travis-ci.org/cloudposse/terraform-aws-rds-cloudwatch-sns-alarms) [![Latest Release](https://img.shields.io/github/release/cloudposse/terraform-aws-rds-cloudwatch-sns-alarms.svg)](https://github.com/cloudposse/terraform-aws-rds-cloudwatch-sns-alarms/releases) [![Slack Community](https://slack.cloudposse.com/badge.svg)](https://slack.cloudposse.com)
 
 
-Terraform module that configures important RDS alerts using CloudWatch and sends them to an SNS topic.
+Terraform module that configures important RDS alerts using CloudWatch and sends them to the chosen SNS topic.
 
 Create a set of sane RDS CloudWatch alerts for monitoring the health of an RDS instance.
 
@@ -41,6 +41,7 @@ It's 100% Open Source and licensed under the [APACHE2](LICENSE).
 | Memory  | FreeableMemory   | `<`                  | 64 MB     | This number is calculated from our experience with RDS workloads.                                                                                                                                      |
 | Memory  | SwapUsage        | `>`                  | 256 MB    | Sometimes you can not entirely avoid swapping. But once the database accesses paged memory, it will slow down.                                                                                         |
 
+The module will also alert on `failure` type events. See https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Events.html for a list of events.
 
 
 
@@ -67,7 +68,8 @@ resource "aws_db_instance" "default" {
 
 module "rds_alarms" {
   source         = "git::https://github.com/cloudposse/terraform-aws-rds-cloudwatch-sns-alarms.git?ref=tags/0.1.5"
-  db_instance_id = "${aws_db_instance.default.id}"
+  db_instance_ids = [aws_db_instance.default.id]
+  aws_sns_topic_arn = aws_sns_topic.default.arn
 }
 ```
 
@@ -78,20 +80,18 @@ module "rds_alarms" {
 
 | Name | Description | Type | Default | Required |
 |------|-------------|:----:|:-----:|:-----:|
+| db_instance_ids | The instance IDs of the RDS database instance that you want to monitor. | list | - | yes |
+| aws_sns_topic_arn | ARN of SNS topic to use. | string | - | yes |
+| name_prefix | Alarm name prefix for each alarm. | string | `` | no |
+| period | The threshold is analyzed over the last X seconds, where X is alarm_period | string | `600` | no |
+| evaluation_periods | The number of periods over which data is compared to the specified threshold. | string | `1` | no |
 | burst_balance_threshold | The minimum percent of General Purpose SSD (gp2) burst-bucket I/O credits available. | string | `20` | no |
 | cpu_credit_balance_threshold | The minimum number of CPU credits (t2 instances only) available. | string | `20` | no |
 | cpu_utilization_threshold | The maximum percentage of CPU utilization. | string | `80` | no |
-| db_instance_id | The instance ID of the RDS database instance that you want to monitor. | string | - | yes |
 | disk_queue_depth_threshold | The maximum number of outstanding IOs (read/write requests) waiting to access the disk. | string | `64` | no |
 | free_storage_space_threshold | The minimum amount of available storage space in Byte. | string | `2000000000` | no |
 | freeable_memory_threshold | The minimum amount of available random access memory in Byte. | string | `64000000` | no |
 | swap_usage_threshold | The maximum amount of swap space used on the DB instance in Byte. | string | `256000000` | no |
-
-## Outputs
-
-| Name | Description |
-|------|-------------|
-| sns_topic_arn | The ARN of the SNS topic |
 
 ## Makefile Targets
 ```
@@ -233,12 +233,14 @@ Check out [our other projects][github], [apply for a job][jobs], or [hire us][hi
 
 ### Contributors
 
-|  [![Jamie Nelson][Jamie-BitFlight_avatar]][Jamie-BitFlight_homepage]<br/>[Jamie Nelson][Jamie-BitFlight_homepage] | [![Erik Osterman][osterman_avatar]][osterman_homepage]<br/>[Erik Osterman][osterman_homepage] |
-|---|---|
+|  [![Jamie Nelson][Jamie-BitFlight_avatar]][Jamie-BitFlight_homepage]<br/>[Jamie Nelson][Jamie-BitFlight_homepage] | [![Erik Osterman][osterman_avatar]][osterman_homepage]<br/>[Erik Osterman][osterman_homepage] | [![Daniel Patriche][rebelthor_avatar]][rebelthor_homepage]<br/>[Daniel Patriche][rebelthor_homepage] | [![Caleb15][caleb15_avatar]][caleb15_homepage]<br/>[Caleb15][caleb15_homepage] | 
+|---|---|---|---|
 
   [Jamie-BitFlight_homepage]: https://github.com/Jamie-BitFlight
   [Jamie-BitFlight_avatar]: https://github.com/Jamie-BitFlight.png?size=150
   [osterman_homepage]: https://github.com/osterman
   [osterman_avatar]: https://github.com/osterman.png?size=150
-
-
+  [rebelthor_homepage]: https://github.com/rebelthor
+  [rebelthor_avatar]: https://github.com/rebelthor.png?size=150
+  [caleb15_homepage]: https://github.com/caleb15
+  [caleb15_avatar]: https://github.com/caleb15.png?size=150
